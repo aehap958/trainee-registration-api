@@ -3,6 +3,10 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 trainees_db = []
 
+@app.route('/', methods=['GET'])
+def health_check():
+    return jsonify({"status": "API is running securely"}), 200
+
 @app.route('/register', methods=['POST'])
 def register_trainee():
     data = request.get_json()
@@ -19,4 +23,5 @@ def register_trainee():
     return jsonify({"message": "Trainee registered successfully!", "trainee_id": new_trainee['id']}), 201
 
 if __name__ == '__main__':
-app.run(debug=False)
+    # Secure configuration: debug is False
+    app.run(host='127.0.0.1', port=5000, debug=False)
