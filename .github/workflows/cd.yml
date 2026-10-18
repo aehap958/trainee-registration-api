@@ -1,6 +1,8 @@
 name: Complete CD Deployment Pipeline (Week 1)
 
 on:
+  push:
+    branches: [ "main" ]
   workflow_run:
     workflows: ["Complete CI Security Pipeline (Week 1)"]
     types:
@@ -12,19 +14,17 @@ permissions:
 
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    # الاتصال الفعلي بحساب AWS باستخدام الـ IAM Role
     - name: Configure AWS IAM Role Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: arn:aws:iam::147885328941:role/GitHubActions-Pipeline-Role-ahmedehab
-        aws-region: us-east-1
+        aws-region: eu-west-1
 
     - name: Verify AWS Connection & Deploy
       run: |
