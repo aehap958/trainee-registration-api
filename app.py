@@ -19,4 +19,4 @@ def register_trainee():
     return jsonify({"message": "Trainee registered successfully!", "trainee_id": new_trainee['id']}), 201
 
 if __name__ == '__main__':
-    app.run(debug=True)
+app.run(debug=False)
