@@ -34,7 +34,7 @@ jobs:
 
     # 4. فحص الكود الثابت (SAST)
     - name: Run SAST (Bandit)
-      run: bandit -r app.py
+      run: bandit -r app.py lambda_function.py
 
     # 5. فحص المكتبات (SCA)
     - name: Run SCA (pip-audit)

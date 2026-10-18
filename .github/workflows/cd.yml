@@ -21,7 +21,7 @@ jobs:
       IAM_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v4.2.2
 
     - name: Authenticate via AWS IAM Role (Ireland - eu-west-1)
       run: |
