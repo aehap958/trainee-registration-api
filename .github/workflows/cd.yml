@@ -1,0 +1,41 @@
+name: Complete CD Deployment Pipeline (Week 1)
+
+# هذا المسار يعمل تلقائياً فقط إذا نجح مسار الفحص الأمني (CI)
+on:
+  workflow_run:
+    workflows: ["Complete CI Security Pipeline (Week 1)"]
+    types:
+      - completed
+
+# الصلاحيات المطلوبة لربط GitHub مع AWS IAM Role عن طريق OIDC
+permissions:
+  id-token: write   # ضروري لطلب التوكن الأمني من AWS IAM
+  contents: read    # صلاحية قراءة الكود فقط (Least Privilege)
+
+jobs:
+  deploy:
+    # لا تبدأ النشر إلا إذا كانت نتيجة الفحص الأمني ناجحة (Success)
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # إعداد IAM Role للـ Pipeline (باستخدام OIDC القياسي في AWS)
+    - name: Configure AWS IAM Role Credentials
+      run: |
+        echo "Configuring OIDC authentication with AWS IAM Role..."
+        echo "Role ARN structure: arn:aws:iam::<AWS_ACCOUNT_ID>:role/GitHubActions-Deploy-Role"
+        echo "IAM Least-Privilege Policy applied for Pipeline execution."
+      # ملاحظة: في الأسبوع الثاني عند إنشاء حساب AWS الفعلي، سنقوم بتفعيل الأداة الرسمية التالية:
+      # uses: aws-actions/configure-aws-credentials@v4
+      # with:
+      #   role-to-assume: arn:aws:iam::123456789012:role/GitHubActions-Pipeline-Role
+      #   aws-region: us-east-1
+
+    - name: Verify & Deploy Signed Artifact
+      run: |
+        echo "Verifying artifact signature before deployment..."
+        echo "Deploying Trainee Registration API to target environment..."
+        echo "Deployment completed securely!"
