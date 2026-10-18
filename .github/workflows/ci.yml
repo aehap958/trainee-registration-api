@@ -1,0 +1,37 @@
+name: CI - Security Pipeline
+
+# الكود ده هيشتغل تلقائياً أول ما تعمل Push على فرع main
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  security-checks:
+    # بنقول لـ GitHub شغل الفحص ده على سيرفر نظام تشغيله أوبونتو
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. سحب الكود من المستودع
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # 2. تجهيز لغة بايثون على السيرفر
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    # 3. تثبيت مكتبات المشروع وأدوات الفحص الأمني
+    - name: Install Dependencies & Security Tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install bandit pip-audit
+
+    # 4. فحص الكود نفسه (SAST)
+    - name: Run SAST (Bandit)
+      run: bandit -r app.py
+
+    # 5. فحص المكتبات المستخدمة (SCA)
+    - name: Run SCA (pip-audit)
+      run: pip-audit -r requirements.txt
