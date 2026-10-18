@@ -1,20 +1,17 @@
 name: Complete CD Deployment Pipeline (Week 1)
 
-# هذا المسار يعمل تلقائياً فقط إذا نجح مسار الفحص الأمني (CI)
 on:
   workflow_run:
     workflows: ["Complete CI Security Pipeline (Week 1)"]
     types:
       - completed
 
-# الصلاحيات المطلوبة لربط GitHub مع AWS IAM Role عن طريق OIDC
 permissions:
-  id-token: write   # ضروري لطلب التوكن الأمني من AWS IAM
-  contents: read    # صلاحية قراءة الكود فقط (Least Privilege)
+  id-token: write
+  contents: read
 
 jobs:
   deploy:
-    # لا تبدأ النشر إلا إذا كانت نتيجة الفحص الأمني ناجحة (Success)
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
@@ -22,20 +19,15 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    # إعداد IAM Role للـ Pipeline (باستخدام OIDC القياسي في AWS)
+    # الاتصال الفعلي بحساب AWS باستخدام الـ IAM Role
     - name: Configure AWS IAM Role Credentials
-      run: |
-        echo "Configuring OIDC authentication with AWS IAM Role..."
-        echo "Role ARN structure: arn:aws:iam::<AWS_ACCOUNT_ID>:role/GitHubActions-Deploy-Role"
-        echo "IAM Least-Privilege Policy applied for Pipeline execution."
-      # ملاحظة: في الأسبوع الثاني عند إنشاء حساب AWS الفعلي، سنقوم بتفعيل الأداة الرسمية التالية:
-      # uses: aws-actions/configure-aws-credentials@v4
-      # with:
-      #   role-to-assume: arn:aws:iam::123456789012:role/GitHubActions-Pipeline-Role
-      #   aws-region: us-east-1
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::147885328941:role/GitHubActions-Pipeline-Role-ahmedehab
+        aws-region: us-east-1
 
-    - name: Verify & Deploy Signed Artifact
+    - name: Verify AWS Connection & Deploy
       run: |
-        echo "Verifying artifact signature before deployment..."
-        echo "Deploying Trainee Registration API to target environment..."
-        echo "Deployment completed securely!"
+        echo "Successfully authenticated with AWS via OIDC!"
+        aws sts get-caller-identity
+        echo "Deploying Trainee Registration API..."
