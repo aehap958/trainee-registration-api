@@ -1,0 +1,181 @@
+/* ============ المتغيرات: لوحة الألوان والخطوط ============ */
+:root {
+  --mist: #EEF2F1;        /* خلفية الصفحة */
+  --surface: #FFFFFF;     /* خلفية البطاقات */
+  --ink: #12262B;         /* النص الأساسي */
+  --ink-soft: #4A5F64;    /* النص الثانوي */
+  --line: #CBD6D6;        /* الحدود */
+  --petrol: #0F5C63;      /* اللون الرئيسي */
+  --petrol-dark: #0A4349;
+  --signal: #E8A33D;      /* لون الإبراز: التركيز + تذكرة التسجيل */
+  --ok: #1B7F5A;
+  --danger: #B3361F;
+  --font: "IBM Plex Sans Arabic", Tahoma, "Segoe UI", system-ui, sans-serif;
+}
+
+/* ============ الأساسيات ============ */
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font);
+  background: var(--mist);
+  color: var(--ink);
+  line-height: 1.8;
+}
+
+h1, h2 { margin: 0 0 .5rem; line-height: 1.4; }
+h1 { font-size: clamp(1.5rem, 4vw, 2rem); }
+h2 { font-size: 1.25rem; }
+
+/* حلقة تركيز واضحة للوحة المفاتيح */
+:focus-visible { outline: 3px solid var(--signal); outline-offset: 2px; }
+
+/* ============ الترويسة ============ */
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem 1.5rem;
+  max-width: 1080px;
+  margin-inline: auto;
+  padding: 1.25rem clamp(1rem, 4vw, 2rem);
+}
+.brand { display: flex; align-items: center; gap: .6rem; margin: 0; font-weight: 700; color: var(--petrol); }
+
+/* شارة حالة الخادم: لون النقطة يتغير حسب data-state */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  margin: 0;
+  padding: .2rem .9rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: .9rem;
+  color: var(--ink-soft);
+}
+.status::before {
+  content: "";
+  width: .6rem; height: .6rem;
+  border-radius: 50%;
+  background: var(--signal);
+}
+.status[data-state="ok"]::before    { background: var(--ok); }
+.status[data-state="error"]::before { background: var(--danger); }
+
+/* ============ التخطيط: عمود واحد على الموبايل، عمودان على الشاشات الكبيرة ============ */
+.layout {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 1080px;
+  margin-inline: auto;
+  padding: 1rem clamp(1rem, 4vw, 2rem) 3rem;
+}
+@media (min-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; }
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: clamp(1.25rem, 4vw, 2.25rem);
+}
+.lead { margin: 0 0 1.5rem; color: var(--ink-soft); }
+
+/* ============ الحقول ============ */
+.field { margin-bottom: 1.1rem; }
+label { display: block; margin-bottom: .3rem; font-weight: 500; }
+
+input, select {
+  width: 100%;
+  padding: .75rem 1rem;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  transition: border-color .2s, box-shadow .2s;
+}
+input:hover, select:hover { border-color: var(--ink-soft); }
+input:focus, select:focus { border-color: var(--petrol); }
+input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--danger); }
+
+.error { min-height: 1.5rem; margin: .25rem 0 0; font-size: .9rem; color: var(--danger); }
+
+.form-message {
+  margin: 0 0 1rem;
+  padding: .75rem 1rem;
+  border-radius: 10px;
+  background: #FBEAE6;
+  color: var(--danger);
+}
+
+/* ============ الأزرار ============ */
+.btn {
+  width: 100%;
+  padding: .85rem 1.5rem;
+  font: inherit;
+  font-weight: 700;
+  color: #fff;
+  background: var(--petrol);
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color .2s;
+}
+.btn:hover { background: var(--petrol-dark); }
+.btn:disabled { opacity: .65; cursor: wait; }
+.btn-secondary { color: var(--petrol); background: transparent; border: 1.5px solid var(--petrol); }
+.btn-secondary:hover { color: #fff; }
+
+/* مؤشر التحميل أثناء الإرسال */
+.btn[aria-busy="true"]::after {
+  content: "";
+  display: inline-block;
+  width: 1em; height: 1em;
+  margin-inline-start: .6rem;
+  vertical-align: -.15em;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============ تذكرة التسجيل (العنصر المميز في الصفحة) ============ */
+.ticket { padding: 0; overflow: hidden; animation: ticket-in .45s ease-out; }
+@keyframes ticket-in {
+  from { opacity: 0; transform: translateY(12px) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+.ticket-body { padding: clamp(1.25rem, 4vw, 2.25rem); }
+.ticket-body h2 { color: var(--ok); font-size: 1.5rem; }
+.summary { display: grid; grid-template-columns: auto 1fr; gap: .4rem 1.25rem; margin: 1rem 0 1.75rem; }
+.summary dt { color: var(--ink-soft); }
+.summary dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
+
+/* الجزء السفلي من التذكرة يفصله خط منقّط كأنه قسيمة قابلة للقص */
+.ticket-stub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem clamp(1.25rem, 4vw, 2.25rem);
+  background: var(--signal);
+  border-top: 2px dashed var(--ink);
+}
+.ticket-id { font-size: 2.5rem; line-height: 1; }
+
+/* ============ الملاحظة الجانبية ============ */
+.note ul { margin: 0; padding-inline-start: 1.25rem; color: var(--ink-soft); }
+.note li + li { margin-top: .5rem; }
+
+/* احترام تفضيل تقليل الحركة */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

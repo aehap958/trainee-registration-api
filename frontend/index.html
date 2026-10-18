@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>تسجيل المتدربين</title>
+
+  <!-- سياسة أمان المحتوى (CSP): تسمح فقط بملفاتنا والخطوط والاتصال بالـ API المحلي.
+       إن غيّرت عنوان الـ API في script.js فأضفه هنا في connect-src -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' http://127.0.0.1:5000 http://localhost:5000; img-src 'self' data:; base-uri 'none'">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+
+  <!-- الترويسة: اسم البرنامج + حالة الاتصال بالخادم -->
+  <header class="topbar">
+    <p class="brand">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z"/>
+        <path d="M9 12l2 2 4-4"/>
+      </svg>
+      برنامج الحوسبة السحابية الآمنة وDevOps
+    </p>
+    <p id="server-status" class="status" data-state="checking" role="status">
+      جارٍ فحص الخادم…
+    </p>
+  </header>
+
+  <main class="layout">
+
+    <!-- نموذج التسجيل -->
+    <section id="form-section" class="card" aria-labelledby="form-title">
+      <h1 id="form-title">سجّل في البرنامج التدريبي</h1>
+      <p class="lead">أدخل بياناتك الثلاثة، وسنعطيك رقم تسجيل فور الحفظ.</p>
+
+      <!-- novalidate: نعرض رسائل التحقق بأنفسنا بدل رسائل المتصفح -->
+      <form id="register-form" novalidate>
+
+        <div class="field">
+          <label for="name">الاسم الكامل</label>
+          <input id="name" name="name" type="text" autocomplete="name"
+                 minlength="2" maxlength="80" required aria-describedby="name-error">
+          <p id="name-error" class="error" aria-live="polite"></p>
+        </div>
+
+        <div class="field">
+          <label for="email">البريد الإلكتروني</label>
+          <!-- dir="ltr" لأن البريد يُكتب من اليسار لليمين -->
+          <input id="email" name="email" type="email" dir="ltr" inputmode="email"
+                 autocomplete="email" maxlength="254" required aria-describedby="email-error">
+          <p id="email-error" class="error" aria-live="polite"></p>
+        </div>
+
+        <div class="field">
+          <label for="track">المسار التدريبي</label>
+          <select id="track" name="track" required aria-describedby="track-error">
+            <option value="" selected disabled>اختر المسار</option>
+            <option value="Cloud Security">أمن السحابة</option>
+            <option value="DevOps Engineering">هندسة DevOps</option>
+            <option value="Application Security">أمن التطبيقات</option>
+            <option value="Cloud Infrastructure">البنية التحتية السحابية</option>
+          </select>
+          <p id="track-error" class="error" aria-live="polite"></p>
+        </div>
+
+        <p id="form-message" class="form-message" role="alert" hidden></p>
+
+        <button id="submit-btn" class="btn" type="submit">سجّل الآن</button>
+      </form>
+    </section>
+
+    <!-- تذكرة التسجيل: تظهر بعد النجاح بدل النموذج -->
+    <section id="ticket" class="card ticket" aria-labelledby="ticket-title" hidden>
+      <div class="ticket-body">
+        <h2 id="ticket-title" tabindex="-1">تم تسجيلك بنجاح</h2>
+        <dl class="summary">
+          <dt>الاسم</dt>   <dd id="t-name"></dd>
+          <dt>البريد</dt>  <dd id="t-email" dir="ltr"></dd>
+          <dt>المسار</dt>  <dd id="t-track"></dd>
+        </dl>
+        <button id="new-registration" class="btn btn-secondary" type="button">
+          سجّل متدربًا آخر
+        </button>
+      </div>
+      <div class="ticket-stub">
+        <span>رقم التسجيل</span>
+        <strong id="t-id" class="ticket-id"></strong>
+      </div>
+    </section>
+
+    <!-- ملاحظة جانبية: ما نفعله فعلًا ببياناتك -->
+    <aside class="card note" aria-labelledby="note-title">
+      <h2 id="note-title">كيف نتعامل مع بياناتك</h2>
+      <ul>
+        <li>نتحقق من كل حقل في المتصفح ثم مرة ثانية في الخادم.</li>
+        <li>نطلب منك ثلاثة حقول فقط: الاسم والبريد والمسار.</li>
+        <li>لا نقبل بريدًا مسجّلًا مسبقًا، لذلك لا يتكرر التسجيل.</li>
+      </ul>
+    </aside>
+
+  </main>
+</body>
+</html>
