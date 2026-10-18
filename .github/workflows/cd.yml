@@ -18,8 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       AWS_REGION: eu-west-1
-      IAM_ROLE_ARN: arn:aws:iam::147885328941:role/GitHubActions-Pipeline-Role-ahmedehab
-
+      IAM_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
