@@ -4,6 +4,7 @@ on:
   push:
     branches: [ "main" ]
 
+# تطبيق مبدأ الصلاحيات الأقل للـ Pipeline (Least Privilege IAM/Permissions)
 permissions:
   contents: read
 
@@ -12,34 +13,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # 1. سحب الكود
     - name: Checkout Code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
+    # 2. تجهيز بايثون
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
+    # 3. تثبيت المكتبات وأدوات الفحص
     - name: Install Dependencies & Security Tools
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install bandit pip-audit
 
+    # 4. فحص الكود الثابت (SAST)
     - name: Run SAST (Bandit)
       run: bandit -r app.py lambda_function.py
 
+    # 5. فحص المكتبات (SCA)
     - name: Run SCA (pip-audit)
       run: pip-audit -r requirements.txt
 
+    # 6. فحص التسريبات والكلمات السرية (Secrets Scanning)
     - name: Run Secrets Scanning (TruffleHog)
       uses: trufflesecurity/trufflehog@main
       with:
         path: ./
         extra_args: --only-verified
 
+    # 7. الفحص الديناميكي للتطبيق وهو شغال (DAST)
     - name: Run DAST (Dynamic API Security Check)
       run: |
         python app.py &
@@ -50,19 +58,20 @@ jobs:
         curl -f -X POST http://127.0.0.1:5000/register -H "Content-Type: application/json" -d '{"name":"Test","email":"test@example.com","track":"Cloud"}'
         kill $SERVER_PID
 
+    # 8. تجميع الكود وتوقيعه رقمياً (Artifact Signing)
     - name: Package & Sign Artifact
       run: |
-        # 1. إنشاء ملف الضغط خارج المجلد الحالي تماماً لتجنب خطأ التداخل
-        tar -czf ../trainee-api-artifact.tar.gz --exclude='.git' --exclude='.github' --exclude='__pycache__' .
+        # ضغط ملفات التطبيق في ملف واحد (Artifact)
+        tar -czf trainee-api-artifact.tar.gz app.py requirements.txt
         
-        # 2. نقل الملف الجاهز إلى مجلد المشروع الحالي
-        mv ../trainee-api-artifact.tar.gz .
-        
-        # 3. توقيع الملف رقمياً
+        # إنشاء مفتاح تشفير وتوقيع الملف رقمياً لضمان عدم التلاعب به
         gpg --batch --passphrase "" --quick-generate-key "CI-Signer <ci@trainee-app.local>" default default never
         gpg --armor --detach-sign trainee-api-artifact.tar.gz
         
+        # التحقق من صحة التوقيع
         gpg --verify trainee-api-artifact.tar.gz.asc trainee-api-artifact.tar.gz
+
+    # 9. حفظ الملف الموقع والمخرجات كـ Deliverable
     - name: Upload Signed Artifact
       uses: actions/upload-artifact@v4
       with:
