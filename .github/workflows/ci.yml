@@ -52,14 +52,13 @@ jobs:
 
     - name: Package & Sign Artifact
       run: |
-        # ضغط كل ملفات المشروع مع استثناء مجلدات جيت
-        tar -czf trainee-api-artifact.tar.gz --exclude='.git' --exclude='.github' .
+        # ضغط كل ملفات المشروع مع استثناء مجلدات جيت وملف الضغط نفسه لتجنب خطأ التداخل
+        tar -czf trainee-api-artifact.tar.gz --exclude='.git' --exclude='.github' --exclude='trainee-api-artifact.tar.gz' .
         
         gpg --batch --passphrase "" --quick-generate-key "CI-Signer <ci@trainee-app.local>" default default never
         gpg --armor --detach-sign trainee-api-artifact.tar.gz
         
         gpg --verify trainee-api-artifact.tar.gz.asc trainee-api-artifact.tar.gz
-
     - name: Upload Signed Artifact
       uses: actions/upload-artifact@v4
       with:
