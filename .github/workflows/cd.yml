@@ -7,8 +7,8 @@ on:
     types:
       - completed
 
+# تم مسح id-token: write لأننا سنستخدم مفاتيح الأمان بدلاً من OIDC
 permissions:
-  id-token: write
   contents: read
 
 jobs:
@@ -17,7 +17,6 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     env:
       AWS_REGION: eu-west-1
-      IAM_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
     
     steps:
     - name: Checkout Code
@@ -30,12 +29,15 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         run-id: ${{ github.event.workflow_run.id }}
 
-    - name: Authenticate via AWS IAM Role
+    # تسجيل الدخول الفعلي باستخدام المفاتيح التي أضفتها في GitHub Secrets
+    - name: Authenticate via AWS Access Keys
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: ${{ env.IAM_ROLE_ARN }}
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
+    # الرفع الحقيقي والفعلي للكود على AWS Lambda
     - name: Verify Signed Artifact & Deploy to AWS Lambda
       run: |
         echo "Extracting prepared files..."
@@ -48,7 +50,7 @@ jobs:
         cd ..
         
         echo "Deploying changes to AWS Lambda ($AWS_REGION)..."
-        # تأكد من أن TraineeAPI هو اسم الدالة الفعلي في حسابك على AWS
+        # أمر الرفع الفعلي الذي سيقوم بتحديث الكود داخل دالة TraineeAPI
         aws lambda update-function-code --function-name TraineeAPI --zip-file fileb://deploy_package.zip
         
-        echo "Deployment completed securely!"
+        echo "Deployment completed securely and successfully!"
