@@ -2,7 +2,7 @@
 
 /* ============ الإعدادات ============ */
 // عنوان الـ API. عند نشره على الإنترنت غيّره هنا وفي سياسة CSP داخل index.html
-const API_BASE_URL = 'https://fq9usb8fc8.execute-api.eu-west-1.amazonaws.com/prod';
+const API_BASE_URL = 'https://ql6dz0p7nj.execute-api.eu-west-1.amazonaws.com/prod';
 const REQUEST_TIMEOUT_MS = 8000;
 
 /* ============ عناصر الصفحة ============ */
