@@ -1,14 +1,16 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>تسجيل المتدربين</title>
+  <title>A.E Company | Trainee Registration</title>
+  <meta name="theme-color" content="#080D18">
+  <meta name="color-scheme" content="dark">
 
-  <!-- سياسة أمان المحتوى (CSP): تسمح فقط بملفاتنا والخطوط والاتصال بالـ API المحلي.
-       إن غيّرت عنوان الـ API في script.js فأضفه هنا في connect-src -->
+  <!-- Content Security Policy: allows only our own files, the fonts and the API.
+       If you change the API address in script.js, add it here in connect-src -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://fq9usb8fc8.execute-api.eu-west-1.amazonaws.com; base-uri 'none';"
+        content="default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://fq9usb8fc8.execute-api.eu-west-1.amazonaws.com; base-uri 'none';">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
@@ -17,93 +19,114 @@
 </head>
 <body>
 
-  <!-- الترويسة: اسم البرنامج + حالة الاتصال بالخادم -->
+  <!-- Top bar: brand + server status -->
   <header class="topbar">
     <p class="brand">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z"/>
-        <path d="M9 12l2 2 4-4"/>
-      </svg>
-      برنامج الحوسبة السحابية الآمنة وDevOps
+      <span class="brand-mark" aria-hidden="true">AE</span>
+      <span class="brand-text">
+        <strong class="brand-name">A.E Company</strong>
+        <small>Secure Cloud &amp; DevOps Program</small>
+      </span>
     </p>
+    <nav class="nav-links" aria-label="Page sections">
+      <a href="#form-section">Register</a>
+      <a href="#privacy">Your data</a>
+    </nav>
     <p id="server-status" class="status" data-state="checking" role="status">
-      جارٍ فحص الخادم…
+      Checking server…
     </p>
   </header>
 
   <main class="layout">
 
-    <!-- نموذج التسجيل -->
-    <section id="form-section" class="card" aria-labelledby="form-title">
-      <h1 id="form-title">سجّل في البرنامج التدريبي</h1>
-      <p class="lead">أدخل بياناتك الثلاثة، وسنعطيك رقم تسجيل فور الحفظ.</p>
+    <!-- Hero -->
+    <section class="hero" aria-labelledby="hero-title">
+      <h1 id="hero-title">Build secure cloud and DevOps skills with A.E Company</h1>
+      <p class="hero-text">Join our Secure Cloud Computing and DevOps program. Pick your track, register in under a minute, and get your registration number instantly.</p>
+      <div class="hero-actions">
+        <a class="btn btn-auto" href="#form-section">Register now</a>
+        <a class="btn btn-auto btn-secondary" href="#privacy">How we handle your data</a>
+      </div>
+      <ul class="chips" aria-label="Available tracks">
+        <li>Cloud Security</li>
+        <li>DevOps Engineering</li>
+        <li>Application Security</li>
+        <li>Cloud Infrastructure</li>
+      </ul>
+    </section>
 
-      <!-- novalidate: نعرض رسائل التحقق بأنفسنا بدل رسائل المتصفح -->
+    <!-- Registration form -->
+    <section id="form-section" class="card" aria-labelledby="form-title">
+      <h2 id="form-title">Register for the training program</h2>
+      <p class="lead">Enter your three details and we'll give you a registration number as soon as it's saved.</p>
+
+      <!-- novalidate: validation messages are shown by script.js instead of the browser -->
       <form id="register-form" novalidate>
 
         <div class="field">
-          <label for="name">الاسم الكامل</label>
+          <label for="name">Full name</label>
           <input id="name" name="name" type="text" autocomplete="name"
                  minlength="2" maxlength="80" required aria-describedby="name-error">
           <p id="name-error" class="error" aria-live="polite"></p>
         </div>
 
         <div class="field">
-          <label for="email">البريد الإلكتروني</label>
-          <!-- dir="ltr" لأن البريد يُكتب من اليسار لليمين -->
+          <label for="email">Email address</label>
           <input id="email" name="email" type="email" dir="ltr" inputmode="email"
-                 autocomplete="email" maxlength="254" required aria-describedby="email-error">
+                 autocomplete="email" maxlength="254" placeholder="name@example.com"
+                 required aria-describedby="email-error">
           <p id="email-error" class="error" aria-live="polite"></p>
         </div>
 
         <div class="field">
-          <label for="track">المسار التدريبي</label>
+          <label for="track">Training track</label>
           <select id="track" name="track" required aria-describedby="track-error">
-            <option value="" selected disabled>اختر المسار</option>
-            <option value="Cloud Security">أمن السحابة</option>
-            <option value="DevOps Engineering">هندسة DevOps</option>
-            <option value="Application Security">أمن التطبيقات</option>
-            <option value="Cloud Infrastructure">البنية التحتية السحابية</option>
+            <option value="" selected disabled>Select a track</option>
+            <option value="Cloud Security">Cloud Security</option>
+            <option value="DevOps Engineering">DevOps Engineering</option>
+            <option value="Application Security">Application Security</option>
+            <option value="Cloud Infrastructure">Cloud Infrastructure</option>
           </select>
           <p id="track-error" class="error" aria-live="polite"></p>
         </div>
 
         <p id="form-message" class="form-message" role="alert" hidden></p>
 
-        <button id="submit-btn" class="btn" type="submit">سجّل الآن</button>
+        <button id="submit-btn" class="btn" type="submit">Register now</button>
       </form>
     </section>
 
-    <!-- تذكرة التسجيل: تظهر بعد النجاح بدل النموذج -->
+    <!-- Registration ticket: shown instead of the form after success -->
     <section id="ticket" class="card ticket" aria-labelledby="ticket-title" hidden>
       <div class="ticket-body">
-        <h2 id="ticket-title" tabindex="-1">تم تسجيلك بنجاح</h2>
+        <h2 id="ticket-title" tabindex="-1">You're registered</h2>
         <dl class="summary">
-          <dt>الاسم</dt>   <dd id="t-name"></dd>
-          <dt>البريد</dt>  <dd id="t-email" dir="ltr"></dd>
-          <dt>المسار</dt>  <dd id="t-track"></dd>
+          <dt>Name</dt>   <dd id="t-name"></dd>
+          <dt>Email</dt>  <dd id="t-email" dir="ltr"></dd>
+          <dt>Track</dt>  <dd id="t-track"></dd>
         </dl>
         <button id="new-registration" class="btn btn-secondary" type="button">
-          سجّل متدربًا آخر
+          Register another trainee
         </button>
       </div>
       <div class="ticket-stub">
-        <span>رقم التسجيل</span>
+        <span>Registration number</span>
         <strong id="t-id" class="ticket-id"></strong>
       </div>
     </section>
 
-    <!-- ملاحظة جانبية: ما نفعله فعلًا ببياناتك -->
-    <aside class="card note" aria-labelledby="note-title">
-      <h2 id="note-title">كيف نتعامل مع بياناتك</h2>
+    <!-- Side note: what we actually do with your data -->
+    <aside id="privacy" class="card note" aria-labelledby="note-title">
+      <h2 id="note-title">How we handle your data</h2>
       <ul>
-        <li>نتحقق من كل حقل في المتصفح ثم مرة ثانية في الخادم.</li>
-        <li>نطلب منك ثلاثة حقول فقط: الاسم والبريد والمسار.</li>
-        <li>لا نقبل بريدًا مسجّلًا مسبقًا، لذلك لا يتكرر التسجيل.</li>
+        <li>Every field is validated in your browser, then again on the server.</li>
+        <li>We ask for three fields only: name, email, and track.</li>
+        <li>An email can register only once, so duplicate sign-ups are blocked.</li>
       </ul>
     </aside>
 
   </main>
+
+  <footer class="footer">© 2026 A.E Company. All rights reserved.</footer>
 </body>
 </html>
