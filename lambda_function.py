@@ -1,15 +1,21 @@
 import json
 import re
 
-# قائمة محاكاة لقاعدة البيانات
 trainees_db = []
 
-# تعبير نمطي (Regex) لمنع أي محاولات حقن خبيثة (SQLi / XSS Injection Controls)
+# تعبير نمطي لمنع هجمات الحقن (SQLi / XSS Injection Controls)
 SAFE_TEXT_PATTERN = re.compile(r"^[a-zA-Z0-9\s\-_@.]{2,50}$")
 EMAIL_PATTERN = re.compile(r"^[\w\.-]+@[\w\.-]+\.\w+$")
 
+# إعدادات CORS للسماح للفرونت إند (CloudFront) بالاتصال بالباك إند
+CORS_HEADERS = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+}
+
 def validate_input(data):
-    """التحقق الصارم من المدخلات لمنع هجمات الحقن (Input Validation)"""
     required_fields = ['name', 'email', 'track']
     for field in required_fields:
         if field not in data or not isinstance(data[field], str):
@@ -23,42 +29,33 @@ def validate_input(data):
     return True, "Valid"
 
 def lambda_handler(event, context):
-    """الدالة الرئيسية التي تعمل على AWS Lambda خلف API Gateway"""
-    
-    # 1. استخراج طريقة الطلب (GET أو POST) ومعلومات الهوية من Cognito (RBAC/ABAC)
     http_method = event.get('httpMethod', 'POST')
+    
+    # الرد على طلبات الفحص المسبق من المتصفح (CORS Preflight)
+    if http_method == 'OPTIONS':
+        return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'status': 'OK'})}
+
     claims = event.get('requestContext', {}).get('authorizer', {}).get('claims', {})
     user_role = claims.get('cognito:groups', 'Trainee')
-    user_department = claims.get('custom:department', 'General') # ABAC Attribute
 
-    # 2. تطبيق RBAC/ABAC: مسار عرض المتدربين مسموح فقط للـ Admin
+    # مسار عرض المتدربين (GET)
     if http_method == 'GET':
-        if 'Admin' not in str(user_role):
-            return {
-                'statusCode': 403,
-                'headers': {'Content-Type': 'application/json'},
-                'body': json.dumps({'error': 'Access Denied: RBAC policy requires Admin role'})
-            }
         return {
             'statusCode': 200,
-            'headers': {'Content-Type': 'application/json'},
-            'body': json.dumps({'trainees': trainees_db, 'department_scope': user_department})
+            'headers': CORS_HEADERS,
+            'body': json.dumps({'trainees': trainees_db, 'role': user_role})
         }
 
-    # 3. مسار تسجيل متدرب جديد (POST /register) مع فحص المدخلات
+    # مسار تسجيل متدرب جديد (POST)
     if http_method == 'POST':
         try:
             body = json.loads(event.get('body', '{}'))
         except Exception:
-            return {'statusCode': 400, 'body': json.dumps({'error': 'Malformed JSON payload'})}
+            return {'statusCode': 400, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'Malformed JSON payload'})}
 
         is_valid, message = validate_input(body)
         if not is_valid:
-            return {
-                'statusCode': 400,
-                'headers': {'Content-Type': 'application/json'},
-                'body': json.dumps({'error': message})
-            }
+            return {'statusCode': 400, 'headers': CORS_HEADERS, 'body': json.dumps({'error': message})}
 
         new_trainee = {
             'id': len(trainees_db) + 1,
@@ -70,11 +67,11 @@ def lambda_handler(event, context):
 
         return {
             'statusCode': 201,
-            'headers': {'Content-Type': 'application/json'},
+            'headers': CORS_HEADERS,
             'body': json.dumps({
-                'message': 'Trainee registered securely via Serverless API!',
-                'trainee_id': new_trainee['id']
+                'message': 'Trainee registered securely!',
+                'trainee': new_trainee
             })
         }
 
-    return {'statusCode': 405, 'body': json.dumps({'error': 'Method Not Allowed'})}
+    return {'statusCode': 405, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'Method Not Allowed'})}
