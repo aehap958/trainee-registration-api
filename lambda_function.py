@@ -4,7 +4,7 @@ import re
 trainees_db = []
 
 # تعبير نمطي لمنع هجمات الحقن (SQLi / XSS Injection Controls)
-SAFE_TEXT_PATTERN = re.compile(r"^[a-zA-Z0-9\s\-_@.]{2,50}$")
+SAFE_TEXT_PATTERN = re.compile(r"^[\u0600-\u06FFa-zA-Z0-9\s\-_@.]{2,50}$")
 EMAIL_PATTERN = re.compile(r"^[\w\.-]+@[\w\.-]+\.\w+$")
 
 # إعدادات CORS للسماح للفرونت إند (CloudFront) بالاتصال بالباك إند
