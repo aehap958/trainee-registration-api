@@ -14,7 +14,7 @@ table = dynamodb.Table(TABLE_NAME)
 SAFE_TEXT_PATTERN = re.compile(r"^[\u0600-\u06FFa-zA-Z0-9\s\-_@.&/()]{2,80}$")
 EMAIL_PATTERN = re.compile(r"^[\w\.-]+@[\w\.-]+\.\w+$")
 
-# عناوين CORS كاملة عشان المتصفح ميعملش Block أبداً
+# عناوين CORS كاملة لمنع حظر المتصفح
 CORS_HEADERS = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
@@ -35,21 +35,20 @@ def validate_input(data):
 
 def lambda_handler(event, context):
     try:
-        # قراءة طريقة الطلب سواء من REST API أو HTTP API
         http_method = event.get('httpMethod') or event.get('requestContext', {}).get('http', {}).get('method', 'POST')
         
-        # 1. الرد الفوري على طلبات OPTIONS (عشان CORS)
+        # 1. الرد الفوري على طلبات OPTIONS (CORS Preflight)
         if http_method == 'OPTIONS':
             return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'status': 'OK'})}
 
-        # 2. الرد على طلبات GET (عشان حالة الخادم وعرض البيانات)
+        # 2. الرد على طلبات GET
         if http_method == 'GET':
             items = []
             try:
                 response = table.scan()
                 items = response.get('Items', [])
-            except Exception:
-                pass
+            except Exception as db_err:
+                print(f"DynamoDB scan warning: {db_err}")
             return {
                 'statusCode': 200,
                 'headers': CORS_HEADERS,
@@ -77,7 +76,6 @@ def lambda_handler(event, context):
                 'created_at': datetime.utcnow().isoformat()
             }
 
-            # الحفظ في DynamoDB بأمان
             try:
                 table.put_item(
                     Item=new_trainee,
@@ -86,8 +84,9 @@ def lambda_handler(event, context):
             except ClientError as e:
                 if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
                     return {'statusCode': 409, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'هذا البريد الإلكتروني مسجل مسبقاً!'})}
-            except Exception:
-                pass
+                print(f"DynamoDB ClientError: {e}")
+            except Exception as db_err:
+                print(f"DynamoDB put_item warning: {db_err}")
 
             return {
                 'statusCode': 201,
@@ -103,7 +102,7 @@ def lambda_handler(event, context):
         return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'status': 'ok'})}
 
     except Exception as e:
-        # حتى لو حصل أي خطأ غير متوقع، رجّع CORS headers عشان المتصفح ميعملش Block
+        print(f"Unhandled server error: {e}")
         return {
             'statusCode': 500,
             'headers': CORS_HEADERS,
