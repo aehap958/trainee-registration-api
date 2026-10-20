@@ -1,13 +1,19 @@
 import json
 import re
+import uuid
+from datetime import datetime
+import boto3
+from botocore.exceptions import ClientError
 
-trainees_db = []
+# الاتصال بجدول DynamoDB في منطقة أيرلندا
+dynamodb = boto3.resource('dynamodb', region_name='eu-west-1')
+TABLE_NAME = 'TraineesTable-ahmedehab'
+table = dynamodb.Table(TABLE_NAME)
 
-# تعبير نمطي لمنع هجمات الحقن (SQLi / XSS Injection Controls)
+# تعبير نمطي لمنع هجمات الحقن (SQLi / XSS Injection Controls) مع دعم العربي والإنجليزي
 SAFE_TEXT_PATTERN = re.compile(r"^[\u0600-\u06FFa-zA-Z0-9\s\-_@.]{2,50}$")
 EMAIL_PATTERN = re.compile(r"^[\w\.-]+@[\w\.-]+\.\w+$")
 
-# إعدادات CORS للسماح للفرونت إند (CloudFront) بالاتصال بالباك إند
 CORS_HEADERS = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
@@ -20,10 +26,10 @@ def validate_input(data):
     for field in required_fields:
         if field not in data or not isinstance(data[field], str):
             return False, f"Missing or invalid field: {field}"
-        if not SAFE_TEXT_PATTERN.match(data[field]):
+        if not SAFE_TEXT_PATTERN.match(data[field].strip()):
             return False, f"Security Alert: Potential injection detected in '{field}'!"
     
-    if not EMAIL_PATTERN.match(data['email']):
+    if not EMAIL_PATTERN.match(data['email'].strip()):
         return False, "Invalid email format"
         
     return True, "Valid"
@@ -31,22 +37,28 @@ def validate_input(data):
 def lambda_handler(event, context):
     http_method = event.get('httpMethod', 'POST')
     
-    # الرد على طلبات الفحص المسبق من المتصفح (CORS Preflight)
+    # الرد على فحص المتصفح المسبق (CORS)
     if http_method == 'OPTIONS':
         return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'status': 'OK'})}
 
+    # استخراج صلاحيات المستخدم من Cognito (إن وجدت)
     claims = event.get('requestContext', {}).get('authorizer', {}).get('claims', {})
     user_role = claims.get('cognito:groups', 'Trainee')
 
-    # مسار عرض المتدربين (GET)
+    # مسار GET: فحص حالة الخادم أو عرض المتدربين
     if http_method == 'GET':
-        return {
-            'statusCode': 200,
-            'headers': CORS_HEADERS,
-            'body': json.dumps({'trainees': trainees_db, 'role': user_role})
-        }
+        try:
+            response = table.scan()
+            items = response.get('Items', [])
+            return {
+                'statusCode': 200,
+                'headers': CORS_HEADERS,
+                'body': json.dumps({'status': 'ok', 'count': len(items), 'trainees': items, 'role': user_role})
+            }
+        except Exception:
+            return {'statusCode': 500, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'Database error'})}
 
-    # مسار تسجيل متدرب جديد (POST)
+    # مسار POST: تسجيل متدرب جديد في DynamoDB
     if http_method == 'POST':
         try:
             body = json.loads(event.get('body', '{}'))
@@ -57,19 +69,40 @@ def lambda_handler(event, context):
         if not is_valid:
             return {'statusCode': 400, 'headers': CORS_HEADERS, 'body': json.dumps({'error': message})}
 
+        email = body['email'].strip().lower()
+        trainee_id = f"TR-{str(uuid.uuid4())[:8].upper()}"
+
         new_trainee = {
-            'id': len(trainees_db) + 1,
-            'name': body['name'],
-            'email': body['email'],
-            'track': body['track']
+            'email': email,
+            'id': trainee_id,
+            'trainee_id': trainee_id,
+            'name': body['name'].strip(),
+            'track': body['track'].strip(),
+            'created_at': datetime.utcnow().isoformat()
         }
-        trainees_db.append(new_trainee)
+
+        try:
+            # حفظ المتدرب في DynamoDB مع شرط عدم تكرار البريد الإلكتروني
+            table.put_item(
+                Item=new_trainee,
+                ConditionExpression='attribute_not_exists(email)'
+            )
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
+                return {
+                    'statusCode': 409,
+                    'headers': CORS_HEADERS,
+                    'body': json.dumps({'error': 'هذا البريد الإلكتروني مسجل مسبقاً!'})
+                }
+            return {'statusCode': 500, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'Failed to save to database'})}
 
         return {
             'statusCode': 201,
             'headers': CORS_HEADERS,
             'body': json.dumps({
-                'message': 'Trainee registered securely!',
+                'message': 'Trainee registered securely in DynamoDB!',
+                'id': trainee_id,
+                'trainee_id': trainee_id,
                 'trainee': new_trainee
             })
         }
