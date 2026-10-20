@@ -2,7 +2,7 @@
 
 /* ============ الإعدادات ============ */
 // عنوان الـ API. عند نشره على الإنترنت غيّره هنا وفي سياسة CSP داخل index.html
-const API_BASE_URL = 'https://q8w3o9mqvd.execute-api.eu-west-1.amazonaws.com/prod';
+const API_BASE_URL = 'https://wmt4tecsazqjb3udgasdv7lxzq0fhivd.lambda-url.eu-west-1.on.aws';
 const REQUEST_TIMEOUT_MS = 8000;
 
 /* ============ عناصر الصفحة ============ */
@@ -103,7 +103,7 @@ async function fetchWithTimeout(url, options = {}) {
 /** فحص صحة الخادم عبر GET / وتحديث الشارة في الترويسة */
 async function checkServer() {
   try {
-    const res = await fetchWithTimeout(`${API_BASE_URL}/`);
+    const res = await fetchWithTimeout(`${API_BASE_URL}/prod`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     statusEl.dataset.state = 'ok';
     statusEl.textContent = 'الخادم متصل';
@@ -122,7 +122,7 @@ async function handleSubmit(event) {
   setLoading(true);
 
   try {
-    const res = await fetchWithTimeout(`${API_BASE_URL}/register`, {
+    const res = await fetchWithTimeout(`${API_BASE_URL}/prod`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(payload),

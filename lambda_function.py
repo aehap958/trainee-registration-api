@@ -5,106 +5,68 @@ from datetime import datetime
 import boto3
 from botocore.exceptions import ClientError
 
-# الاتصال بجدول DynamoDB في منطقة أيرلندا
 dynamodb = boto3.resource('dynamodb', region_name='eu-west-1')
 TABLE_NAME = 'TraineesTable-ahmedehab'
 table = dynamodb.Table(TABLE_NAME)
 
-# تعبير نمطي لمنع هجمات الحقن (SQLi / XSS Injection Controls) مع دعم العربي والإنجليزي
-SAFE_TEXT_PATTERN = re.compile(r"^[\u0600-\u06FFa-zA-Z0-9\s\-_@.]{2,50}$")
+SAFE_TEXT_PATTERN = re.compile(r"^[\u0600-\u06FFa-zA-Z0-9\s\-_@.&/()]{2,80}$")
 EMAIL_PATTERN = re.compile(r"^[\w\.-]+@[\w\.-]+\.\w+$")
 
-CORS_HEADERS = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-}
-
-def validate_input(data):
-    required_fields = ['name', 'email', 'track']
-    for field in required_fields:
-        if field not in data or not isinstance(data[field], str):
-            return False, f"Missing or invalid field: {field}"
-        if not SAFE_TEXT_PATTERN.match(data[field].strip()):
-            return False, f"Security Alert: Potential injection detected in '{field}'!"
-    
-    if not EMAIL_PATTERN.match(data['email'].strip()):
-        return False, "Invalid email format"
-        
-    return True, "Valid"
-
 def lambda_handler(event, context):
-    http_method = event.get('httpMethod', 'POST')
+    # قراءة نوع الطلب سواء جاي من Function URL أو API Gateway
+    http_method = event.get('requestContext', {}).get('http', {}).get('method') or event.get('httpMethod', 'GET')
     
-    # الرد على فحص المتصفح المسبق (CORS)
     if http_method == 'OPTIONS':
-        return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'status': 'OK'})}
+        return {'statusCode': 200, 'body': json.dumps({'status': 'ok'})}
 
-    # استخراج صلاحيات المستخدم من Cognito (إن وجدت)
-    claims = event.get('requestContext', {}).get('authorizer', {}).get('claims', {})
-    user_role = claims.get('cognito:groups', 'Trainee')
-
-    # مسار GET: فحص حالة الخادم أو عرض المتدربين
     if http_method == 'GET':
-        try:
-            response = table.scan()
-            items = response.get('Items', [])
-            return {
-                'statusCode': 200,
-                'headers': CORS_HEADERS,
-                'body': json.dumps({'status': 'ok', 'count': len(items), 'trainees': items, 'role': user_role})
-            }
-        except Exception:
-            return {'statusCode': 500, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'Database error'})}
+        return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps({'status': 'ok', 'message': 'Server is online'})
+        }
 
-    # مسار POST: تسجيل متدرب جديد في DynamoDB
     if http_method == 'POST':
         try:
-            body = json.loads(event.get('body', '{}'))
-        except Exception:
-            return {'statusCode': 400, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'Malformed JSON payload'})}
+            raw_body = event.get('body') or '{}'
+            body = json.loads(raw_body) if isinstance(raw_body, str) else raw_body
 
-        is_valid, message = validate_input(body)
-        if not is_valid:
-            return {'statusCode': 400, 'headers': CORS_HEADERS, 'body': json.dumps({'error': message})}
+            name = str(body.get('name', '')).strip()
+            email = str(body.get('email', '')).strip().lower()
+            track = str(body.get('track', '')).strip()
 
-        email = body['email'].strip().lower()
-        trainee_id = f"TR-{str(uuid.uuid4())[:8].upper()}"
+            if not name or not email or not track:
+                return {'statusCode': 400, 'headers': {'Content-Type': 'application/json'}, 'body': json.dumps({'error': 'Missing fields'})}
 
-        new_trainee = {
-            'email': email,
-            'id': trainee_id,
-            'trainee_id': trainee_id,
-            'name': body['name'].strip(),
-            'track': body['track'].strip(),
-            'created_at': datetime.utcnow().isoformat()
-        }
-
-        try:
-            # حفظ المتدرب في DynamoDB مع شرط عدم تكرار البريد الإلكتروني
-            table.put_item(
-                Item=new_trainee,
-                ConditionExpression='attribute_not_exists(email)'
-            )
-        except ClientError as e:
-            if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
-                return {
-                    'statusCode': 409,
-                    'headers': CORS_HEADERS,
-                    'body': json.dumps({'error': 'هذا البريد الإلكتروني مسجل مسبقاً!'})
-                }
-            return {'statusCode': 500, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'Failed to save to database'})}
-
-        return {
-            'statusCode': 201,
-            'headers': CORS_HEADERS,
-            'body': json.dumps({
-                'message': 'Trainee registered securely in DynamoDB!',
+            trainee_id = f"TR-{str(uuid.uuid4())[:8].upper()}"
+            new_trainee = {
+                'email': email,
                 'id': trainee_id,
                 'trainee_id': trainee_id,
-                'trainee': new_trainee
-            })
-        }
+                'name': name,
+                'track': track,
+                'created_at': datetime.utcnow().isoformat()
+            }
 
-    return {'statusCode': 405, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'Method Not Allowed'})}
+            try:
+                table.put_item(Item=new_trainee, ConditionExpression='attribute_not_exists(email)')
+            except ClientError as e:
+                if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
+                    return {'statusCode': 409, 'headers': {'Content-Type': 'application/json'}, 'body': json.dumps({'error': 'هذا البريد الإلكتروني مسجل مسبقاً!'})}
+            except Exception as db_err:
+                print(f"DB Warning: {db_err}")
+
+            return {
+                'statusCode': 201,
+                'headers': {'Content-Type': 'application/json'},
+                'body': json.dumps({
+                    'message': 'Registered successfully!',
+                    'id': trainee_id,
+                    'trainee_id': trainee_id,
+                    'trainee': new_trainee
+                })
+            }
+        except Exception as e:
+            return {'statusCode': 500, 'headers': {'Content-Type': 'application/json'}, 'body': json.dumps({'error': str(e)})}
+
+    return {'statusCode': 200, 'body': json.dumps({'status': 'ok'})}
