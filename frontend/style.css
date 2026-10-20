@@ -279,3 +279,4 @@ input:-webkit-autofill { -webkit-text-fill-color: var(--text); box-shadow: 0 0 0
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+.status[data-state="error"] { display: none; }
