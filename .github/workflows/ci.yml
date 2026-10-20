@@ -52,9 +52,13 @@ jobs:
 
     - name: Package & Sign Artifact
       run: |
-        # ضغط كل ملفات المشروع مع استثناء مجلدات جيت وملف الضغط نفسه لتجنب خطأ التداخل
-        tar -czf trainee-api-artifact.tar.gz --exclude='.git' --exclude='.github' --exclude='trainee-api-artifact.tar.gz' .
+        # 1. إنشاء ملف الضغط خارج المجلد الحالي تماماً لتجنب خطأ التداخل
+        tar -czf ../trainee-api-artifact.tar.gz --exclude='.git' --exclude='.github' --exclude='__pycache__' .
         
+        # 2. نقل الملف الجاهز إلى مجلد المشروع الحالي
+        mv ../trainee-api-artifact.tar.gz .
+        
+        # 3. توقيع الملف رقمياً
         gpg --batch --passphrase "" --quick-generate-key "CI-Signer <ci@trainee-app.local>" default default never
         gpg --armor --detach-sign trainee-api-artifact.tar.gz
         
