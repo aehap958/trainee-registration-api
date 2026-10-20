@@ -7,7 +7,7 @@ on:
     types:
       - completed
 
-# تم مسح id-token: write لأننا سنستخدم مفاتيح الأمان بدلاً من OIDC
+# تم تحديد الصلاحيات للقراءة فقط لأننا نستخدم مفاتيح الأمان للمصادقة
 permissions:
   contents: read
 
@@ -29,7 +29,7 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         run-id: ${{ github.event.workflow_run.id }}
 
-    # تسجيل الدخول الفعلي باستخدام المفاتيح التي أضفتها في GitHub Secrets
+    # خطوة المصادقة باستخدام المفاتيح التي تمت إضافتها في GitHub Secrets
     - name: Authenticate via AWS Access Keys
       uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -37,7 +37,7 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    # الرفع الحقيقي والفعلي للكود على AWS Lambda
+    # خطوة التجهيز والرفع الفعلي للكود على AWS Lambda
     - name: Verify Signed Artifact & Deploy to AWS Lambda
       run: |
         echo "Extracting prepared files..."
@@ -50,7 +50,7 @@ jobs:
         cd ..
         
         echo "Deploying changes to AWS Lambda ($AWS_REGION)..."
-        # أمر الرفع الفعلي الذي سيقوم بتحديث الكود داخل دالة TraineeAPI
+        # أمر التحديث الفعلي لدالة TraineeAPI
         aws lambda update-function-code --function-name TraineeAPI --zip-file fileb://deploy_package.zip
         
         echo "Deployment completed securely and successfully!"
